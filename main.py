@@ -143,10 +143,10 @@ st.markdown("---")
 # ── Cargar modelo ────────────────────────────────────────────────────────────
 @st.cache_resource
 def cargar_modelo():
-    if not os.path.exists("modelo_perros.keras"):
-        st.error("⚠️ No se encontró 'modelo_perros.keras' en la carpeta actual.")
+    if not os.path.exists("model.keras"):
+        st.error("⚠️ No se encontró 'model.keras' en la carpeta actual.")
         return None
-    return tf.keras.models.load_model("modelo_perros.keras")
+    return tf.keras.models.load_model("model.keras")
 
 @st.cache_resource
 def cargar_clases():
