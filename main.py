@@ -143,22 +143,50 @@ st.markdown("---")
 # ── Cargar modelo ────────────────────────────────────────────────────────────
 @st.cache_resource
 def cargar_modelo():
-    if not os.path.exists("model.keras"):
-        st.error("⚠️ No se encontró 'model.keras' en la carpeta actual.")
+    ruta_modelo = os.path.join(os.getcwd(), "model.keras")
+    if not os.path.exists(ruta_modelo):
+        st.error(f"❌ No se encontró el archivo: {ruta_modelo}")
         return None
-    return tf.keras.models.load_model("model.keras")
 
-@st.cache_resource
-def cargar_clases():
-    images_path = "stanford_dogs/Images"
-    if os.path.exists(images_path):
-        clases = [raza.split("-")[1] for raza in sorted(os.listdir(images_path))
-                  if os.path.isdir(os.path.join(images_path, raza))]
-        return clases
-    return [f"Clase {i}" for i in range(120)]
+    import builtins
+    import tensorflow as tf
+    builtins.tf = tf  # ← inyecta tf globalmente para que Lambda lo encuentre
 
-model  = cargar_modelo()
-clases = cargar_clases()
+    return tf.keras.models.load_model(
+        ruta_modelo,
+        custom_objects={"tf": tf},
+        safe_mode=False
+    )
+modelo=cargar_modelo()
+    
+clases = [
+    'Chihuahua', 'Japanese_spaniel', 'Maltese_dog', 'Pekinese', 'Shih', 'Blenheim_spaniel',
+    'papillon', 'toy_terrier', 'Rhodesian_ridgeback', 'Afghan_hound', 'basset', 'beagle',
+    'bloodhound', 'bluetick', 'black', 'Walker_hound', 'English_foxhound', 'redbone',
+    'borzoi', 'Irish_wolfhound', 'Italian_greyhound', 'whippet', 'Ibizan_hound',
+    'Norwegian_elkhound', 'otterhound', 'Saluki', 'Scottish_deerhound', 'Weimaraner',
+    'Staffordshire_bullterrier', 'American_Staffordshire_terrier', 'Bedlington_terrier',
+    'Border_terrier', 'Kerry_blue_terrier', 'Irish_terrier', 'Norfolk_terrier',
+    'Norwich_terrier', 'Yorkshire_terrier', 'wire', 'Lakeland_terrier', 'Sealyham_terrier',
+    'Airedale', 'cairn', 'Australian_terrier', 'Dandie_Dinmont', 'Boston_bull',
+    'miniature_schnauzer', 'giant_schnauzer', 'standard_schnauzer', 'Scotch_terrier',
+    'Tibetan_terrier', 'silky_terrier', 'soft', 'West_Highland_white_terrier', 'Lhasa',
+    'flat', 'curly', 'golden_retriever', 'Labrador_retriever', 'Chesapeake_Bay_retriever',
+    'German_short', 'vizsla', 'English_setter', 'Irish_setter', 'Gordon_setter',
+    'Brittany_spaniel', 'clumber', 'English_springer', 'Welsh_springer_spaniel',
+    'cocker_spaniel', 'Sussex_spaniel', 'Irish_water_spaniel', 'kuvasz', 'schipperke',
+    'groenendael', 'malinois', 'briard', 'kelpie', 'komondor', 'Old_English_sheepdog',
+    'Shetland_sheepdog', 'collie', 'Border_collie', 'Bouvier_des_Flandres', 'Rottweiler',
+    'German_shepherd', 'Doberman', 'miniature_pinscher', 'Greater_Swiss_Mountain_dog',
+    'Bernese_mountain_dog', 'Appenzeller', 'EntleBucher', 'boxer', 'bull_mastiff',
+    'Tibetan_mastiff', 'French_bulldog', 'Great_Dane', 'Saint_Bernard', 'Eskimo_dog',
+    'malamute', 'Siberian_husky', 'affenpinscher', 'basenji', 'pug', 'Leonberg',
+    'Newfoundland', 'Great_Pyrenees', 'Samoyed', 'Pomeranian', 'chow', 'keeshond',
+    'Brabancon_griffon', 'Pembroke', 'Cardigan', 'toy_poodle', 'miniature_poodle',
+    'standard_poodle', 'Mexican_hairless', 'dingo', 'dhole', 'African_hunting_dog'
+]
+
+
 
 # ── Subir imagen ─────────────────────────────────────────────────────────────
 uploaded = st.file_uploader(
@@ -172,15 +200,15 @@ if uploaded:
     st.image(img, use_container_width=True)
 
     if st.button("🐾  IDENTIFICAR RAZA"):
-        if model is None:
+        if modelo is None:
             st.error("Modelo no cargado.")
         else:
             with st.spinner("Analizando..."):
-                img_resized = img.resize((224, 224))
+                img_resized = img.resize((64, 64))
                 img_array  = np.array(img_resized).astype("float32") / 255.0
                 img_array  = np.expand_dims(img_array, axis=0)
 
-                predicciones = model.predict(img_array)[0]
+                predicciones = modelo.predict(img_array)[0]
                 top5_idx     = predicciones.argsort()[-5:][::-1]
 
                 raza_pred   = clases[top5_idx[0]].replace("_", " ")
