@@ -204,7 +204,7 @@ if uploaded:
             st.error("Modelo no cargado.")
         else:
             with st.spinner("Analizando..."):
-                img_resized = img.resize((64, 64))
+                img_resized = img.resize((150, 150))
                 img_array  = np.array(img_resized).astype("float32") / 255.0
                 img_array  = np.expand_dims(img_array, axis=0)
 
