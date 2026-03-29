@@ -1,133 +1,117 @@
-# 🐾 Dog Breed Classifier
+# 🐶 Clasificador de Razas de Perros — Stanford Dogs Dataset
 
-Aplicación web para clasificar razas de perros a partir de una imagen, construida con una CNN entrenada desde cero sobre el dataset Stanford Dogs.
-
----
-
-## 📌 Descripción
-
-Este proyecto entrena una red neuronal convolucional (CNN) para identificar **120 razas de perros** usando el [Stanford Dogs Dataset](http://vision.stanford.edu/aditya86/ImageNetDogs/). El modelo entrenado se despliega en una interfaz web construida con **Streamlit**.
+**Autor:** Juan Diego Chaparro García
 
 ---
 
-## 🗂️ Estructura del proyecto
+## 📋 Descripción
+
+Proyecto de clasificación de imágenes que entrena una red neuronal convolucional (CNN) para identificar **120 razas de perros** usando el [Stanford Dogs Dataset](http://vision.stanford.edu/aditya86/ImageNetDogs/). El pipeline incluye descarga del dataset, preprocesamiento con bounding boxes, data augmentation y entrenamiento con callbacks de regularización.
+
+---
+
+## 📁 Estructura del Proyecto
 
 ```
-├── app.py               # Interfaz web con Streamlit
-├── model.keras          # Modelo entrenado (no incluido en el repo)
-├── parcial.ipynb        # Notebook de entrenamiento (Google Colab)
-├── requirements.txt     # Dependencias
-└── README.md
+parcial.ipynb              # Notebook principal con todo el pipeline
+/content/stanford_dogs/    # Dataset original (imágenes + anotaciones)
+/content/stanford_dogs_processed/  # Imágenes recortadas y redimensionadas
+model.keras                # Mejor modelo guardado automáticamente
 ```
 
 ---
 
-## 🧠 Arquitectura del modelo
+## ⚙️ Requisitos
 
-El modelo es una CNN secuencial con **data augmentation** integrada:
+- Python 3.8+
+- TensorFlow 2.x
+- Pillow (PIL)
+- NumPy
+- Matplotlib
 
-**Data Augmentation:**
-- Flip horizontal aleatorio
-- Rotación aleatoria (±5%)
-- Zoom aleatorio (±5%)
-- Contraste aleatorio (±10%)
-- Clip de valores al rango [0, 1]
-
-**Capas del modelo:**
-
-| Capa              | Detalles                        |
-|-------------------|---------------------------------|
-| Input             | (64, 64, 3)                     |
-| Data Augmentation | RandomFlip, Rotation, Zoom, etc.|
-| Conv2D            | 64 filtros, kernel 3×3, same    |
-| LeakyReLU         | alpha = 0.1                     |
-| MaxPooling2D      | 2×2                             |
-| Conv2D            | 128 filtros, kernel 3×3, same   |
-| LeakyReLU         | alpha = 0.1                     |
-| MaxPooling2D      | 2×2                             |
-| Flatten           | —                               |
-| Dense             | 64 unidades, ReLU               |
-| BatchNormalization| —                               |
-| Dense             | 32 unidades, ReLU               |
-| BatchNormalization| —                               |
-| Dense (salida)    | 120 unidades, Softmax           |
-
-**Compilación:**
-- Optimizador: `Adam`
-- Loss: `sparse_categorical_crossentropy`
-- Métrica: `accuracy`
-
----
-
-## 📦 Dataset
-
-- **Nombre:** Stanford Dogs Dataset
-- **Total de imágenes:** 20,580
-- **Clases:** 120 razas de perros
-- **Split:** 90% entrenamiento / 10% validación
-
-**Preprocesamiento:**
-1. Recorte con bounding box (anotaciones XML incluidas en el dataset)
-2. Redimensionado a **64×64** píxeles
-3. Normalización: división entre 255 → rango [0.0, 1.0]
-
----
-
-## 🚀 Entrenamiento
-
-El entrenamiento se realizó en **Google Colab** con las siguientes configuraciones:
-
-- Epochs máximos: 50
-- Batch size: 32
-- **EarlyStopping:** paciencia de 5 épocas monitoreando `val_loss`
-- **ModelCheckpoint:** guarda automáticamente el mejor modelo (`model.keras`)
-
----
-
-## 🖥️ Aplicación web
-
-La app permite subir una foto de un perro y obtener:
-- La raza predicha con mayor confianza
-- Barra de confianza visual
-- Top 5 de razas más probables
-
-### Ejecutar localmente
-
+Instalación:
 ```bash
-pip install -r requirements.txt
-streamlit run app.py
+pip install tensorflow pillow numpy matplotlib
 ```
 
-> ⚠️ El archivo `model.keras` debe estar en la misma carpeta que `app.py`.
+> Se recomienda ejecutar en **Google Colab** con GPU habilitada para mayor velocidad.
 
 ---
 
-## 📋 Requisitos
+## 🚀 Pipeline
+
+### 1. Verificación de GPU
+Comprueba si hay GPU disponible. Si no, el entrenamiento corre en CPU (más lento).
+
+### 2. Descarga del Dataset
+Descarga automática desde Stanford Vision Lab:
+- **Imágenes:** ~20,000 fotos de 120 razas
+- **Anotaciones XML:** coordenadas del bounding box de cada perro
+
+### 3. Preprocesamiento
+- Lectura del bounding box desde los archivos XML de anotación
+- Recorte de la región del perro en cada imagen
+- Redimensionamiento a **150×150 píxeles**
+- Validación de bounding boxes inválidos (evita imágenes negras)
+- Imágenes guardadas por carpeta de raza en `/content/stanford_dogs_processed/`
+
+### 4. Carga y Normalización
+- División **90% entrenamiento / 10% validación** (seed=42)
+- Batches de 32 imágenes
+- Normalización de píxeles al rango `[0, 1]`
+
+### 5. Data Augmentation
+Aplicada solo en entrenamiento para mejorar la generalización:
+- Flip horizontal aleatorio
+- Rotación ±5%
+- Zoom ±5%
+- Contraste aleatorio
+- Clip de valores para evitar artefactos
+
+### 6. Arquitectura del Modelo (CNN)
 
 ```
-streamlit
-numpy
-Pillow
-tensorflow
+Input: (150, 150, 3)
+→ Data Augmentation
+→ Conv2D(32) + LeakyReLU + MaxPooling
+→ Conv2D(64) + LeakyReLU + MaxPooling
+→ Conv2D(128) + LeakyReLU + MaxPooling
+→ Conv2D(256) + LeakyReLU + MaxPooling
+→ Flatten
+→ Dense(32) + BatchNormalization
+→ Dense(16) + BatchNormalization
+→ Dense(120, softmax)
 ```
+
+> **Nota:** Se usó `LeakyReLU` en lugar de `ReLU` para evitar el problema de "neuronas muertas" (dying ReLU) que generaba mapas de activación completamente negros.
+
+### 7. Entrenamiento
+
+- **Optimizador:** Adam (lr=0.0003)
+- **Loss:** Sparse Categorical Crossentropy
+- **Épocas máximas:** 60
+- **Callbacks:**
+  - `EarlyStopping` — detiene si `val_loss` no mejora en 5 épocas, restaura los mejores pesos
+  - `ModelCheckpoint` — guarda automáticamente `model.keras` cuando mejora `val_loss`
+  - `ReduceLROnPlateau` — reduce el learning rate ×0.3 si `val_loss` no mejora en 3 épocas (mínimo 1e-6)
+
+### 8. Visualización y Evaluación
+- Gráficas de accuracy y loss por época (entrenamiento vs validación)
+- Accuracy de 36.20 en validation
+- Identificación automática del mejor epoch según `val_loss`
+- Feature maps de las 4 capas convolucionales para inspección visual
+- Evaluación final en el conjunto de validación
 
 ---
 
-## ⚠️ Nota sobre compatibilidad del modelo
+## 📊 Ejecución desde Punto Intermedio
 
-El modelo usa una capa `Lambda` con `tf.clip_by_value` dentro del bloque de data augmentation. Al cargar el modelo, es necesario inyectar `tf` en el scope de deserialización:
-
-```python
-import builtins
-import tensorflow as tf
-builtins.tf = tf
-
-model = tf.keras.models.load_model("model.keras", custom_objects={"tf": tf}, compile=False)
-```
+Si ya se tienen las imágenes preprocesadas en `/content/stanford_dogs_processed/`, se puede saltar directamente a la **celda 10** (`imagen_size = 150`) y ejecutar desde ahí.
 
 ---
 
-## 👤 Autor
+## 📝 Notas Técnicas
 
-**Juan Diego Chaparro Garcia**  
-Proyecto parcial — Redes Neuronales / Deep Learning
+- El tamaño de imagen `imagen_size = 150` está definido como variable global y es compartido por todas las etapas del pipeline.
+- Las imágenes con bounding boxes inválidos (`xmin >= xmax` o `ymin >= ymax`) se omiten automáticamente con una advertencia.
+- El dataset original contiene ~20,580 imágenes; el número final procesado puede variar ligeramente por imágenes corruptas o anotaciones faltantes.
