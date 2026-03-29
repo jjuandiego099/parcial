@@ -23,7 +23,7 @@ model.keras                # Mejor modelo guardado automáticamente
 
 ## ⚙️ Requisitos
 
-- Python 3.8+
+- Python 3.12
 - TensorFlow 2.x
 - Pillow (PIL)
 - NumPy
