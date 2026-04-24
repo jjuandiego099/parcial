@@ -3,7 +3,7 @@
 **Autor:** Juan Diego Chaparro García
 
 ---
-> **Streamlit App:** [🐶 Identificador de Razas](https://parcial-mw4vqz3w49wvjrxsfbp6ea.streamlit.app/)
+> **Streamlit App:** [🐶 Identificador de Razas]([https://parcial-mw4vqz3w49wvjrxsfbp6ea.streamlit.app/](https://clasificador-de-razas-de-perros-stanford-mw4vqz3w49wvjrxsfbp6ea.streamlit.app/))
 ## 📋 Descripción
 
 Proyecto de clasificación de imágenes que entrena una red neuronal convolucional (CNN) para identificar **120 razas de perros** usando el [Stanford Dogs Dataset](http://vision.stanford.edu/aditya86/ImageNetDogs/). El pipeline incluye descarga del dataset, preprocesamiento con bounding boxes, data augmentation y entrenamiento con callbacks de regularización.
